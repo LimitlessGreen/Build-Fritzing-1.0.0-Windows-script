@@ -12,17 +12,14 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1. Quellcode auschecken, inkl. Submodules
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      # 2. Chocolatey verfügbar machen (bereits vorinstalliert auf runner)
       - name: Update Chocolatey
         run: choco upgrade chocolatey -y
 
-      # 3. Abhängigkeiten installieren
       - name: Install Build Dependencies
         run: |
           choco install visualstudio2019buildtools --package-parameters "--allWorkloads --includeRecommended --includeOptional" -y
@@ -31,7 +28,6 @@ jobs:
           choco install ninja -y
           choco install python -y
 
-      # 4. Cache für CMake Downloads & Qt
       - name: Cache CMake & Qt Downloads
         uses: actions/cache@v3
         with:
@@ -40,19 +36,18 @@ jobs:
             C:\tools\qt5*
           key: ${{ runner.os }}-fritzing-build-${{ hashFiles('**/CMakeLists.txt') }}
 
-      # 5. Umgebungsvariablen setzen (falls nötig)
-      - name: Setup Environment
+      - name: Setup Environment (PowerShell)
+        shell: pwsh
         run: |
-          set PATH=C:\Program Files\Qt\5.15.2\msvc2019_64\bin;%PATH%
-          set CMAKE_GENERATOR=Ninja
+          $qtBin = 'C:\Program Files\Qt\5.15.2\msvc2019_64\bin'
+          $Env:PATH = "$qtBin;$Env:PATH"
+          $Env:CMAKE_GENERATOR = 'Ninja'
 
-      # 6. Build-Skript ausführen
       - name: Run Windows Build Script
         working-directory: tools/windows-build
         run: |
           ./00_Execute_Script.bat --non-interactive
 
-      # 7. Artefakte sammeln
       - name: Upload Executable
         uses: actions/upload-artifact@v4
         with:
@@ -68,3 +63,4 @@ jobs:
           path: |
             build\Fritzing-*.zip
             build\Fritzing-Setup-*.exe
+
