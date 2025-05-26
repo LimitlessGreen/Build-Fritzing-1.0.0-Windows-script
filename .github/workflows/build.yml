@@ -7,24 +7,65 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
+    name: Windows Build
     runs-on: windows-latest
 
     steps:
-      - name: Repository klonen
-        uses: actions/checkout@v3
+      # 1. Quellcode auschecken, inkl. Submodules
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: FREEWING-JP Build-Skript klonen
+      # 2. Chocolatey verfügbar machen (bereits vorinstalliert auf runner)
+      - name: Update Chocolatey
+        run: choco upgrade chocolatey -y
+
+      # 3. Abhängigkeiten installieren
+      - name: Install Build Dependencies
         run: |
-          git clone https://github.com/FREEWING-JP/Build-Fritzing-1.0.0-Windows-script.git build-scripts
+          choco install visualstudio2019buildtools --package-parameters "--allWorkloads --includeRecommended --includeOptional" -y
+          choco install qt5-lts --version=5.15.2 -y
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          choco install ninja -y
+          choco install python -y
 
-      - name: Build-Skript ausführen
+      # 4. Cache für CMake Downloads & Qt
+      - name: Cache CMake & Qt Downloads
+        uses: actions/cache@v3
+        with:
+          path: |
+            C:\ProgramData\chocolatey\lib\cmake\tools\cmake-*\share\cmake-*
+            C:\tools\qt5*
+          key: ${{ runner.os }}-fritzing-build-${{ hashFiles('**/CMakeLists.txt') }}
+
+      # 5. Umgebungsvariablen setzen (falls nötig)
+      - name: Setup Environment
         run: |
-          cd build-scripts
-          ./00_Execute_Script.bat
+          set PATH=C:\Program Files\Qt\5.15.2\msvc2019_64\bin;%PATH%
+          set CMAKE_GENERATOR=Ninja
 
-      - name: Artefakte hochladen
+      # 6. Build-Skript ausführen
+      - name: Run Windows Build Script
+        working-directory: tools/windows-build
+        run: |
+          # Beispiel: wenn das FREEWING-JP-Skript drinliegt, andernfalls das offizielle
+          ./00_Execute_Script.bat --non-interactive
+
+      # 7. Artefakte sammeln
+      - name: Upload Executable
         uses: actions/upload-artifact@v3
         with:
-          name: Fritzing-Windows-Build
-          path: path\to\build\output\Fritzing.exe
+          name: fritzing-windows-exe
+          path: |
+            build\bin\Fritzing.exe
+            build\bin\*.dll
+
+      - name: Upload Installer/ZIP
+        uses: actions/upload-artifact@v3
+        with:
+          name: fritzing-windows-installer
+          path: |
+            build\Fritzing-*.zip
+            build\Fritzing-Setup-*.exe
