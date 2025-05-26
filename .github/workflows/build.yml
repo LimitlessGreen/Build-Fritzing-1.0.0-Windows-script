@@ -50,12 +50,11 @@ jobs:
       - name: Run Windows Build Script
         working-directory: tools/windows-build
         run: |
-          # Beispiel: wenn das FREEWING-JP-Skript drinliegt, andernfalls das offizielle
           ./00_Execute_Script.bat --non-interactive
 
       # 7. Artefakte sammeln
       - name: Upload Executable
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fritzing-windows-exe
           path: |
@@ -63,7 +62,7 @@ jobs:
             build\bin\*.dll
 
       - name: Upload Installer/ZIP
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: fritzing-windows-installer
           path: |
