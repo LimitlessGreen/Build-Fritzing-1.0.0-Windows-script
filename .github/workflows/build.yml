@@ -43,10 +43,14 @@ jobs:
           $Env:PATH = "$qtBin;$Env:PATH"
           $Env:CMAKE_GENERATOR = 'Ninja'
 
-      - name: Run Windows Build Script
-        working-directory: tools/windows-build
-        run: |
-          ./00_Execute_Script.bat --non-interactive
+      # ### NEU: FREEWING-JP Build-Skript klonen ###
+      - name: Klone Build-Skript von FREEWING-JP
+        run: git clone https://github.com/FREEWING-JP/Build-Fritzing-1.0.0-Windows-script.git build-scripts
+
+      - name: Run FREEWING-JP Windows Build Script
+        shell: pwsh
+        working-directory: build-scripts
+        run: .\00_Execute_Script.bat --non-interactive
 
       - name: Upload Executable
         uses: actions/upload-artifact@v4
@@ -63,4 +67,3 @@ jobs:
           path: |
             build\Fritzing-*.zip
             build\Fritzing-Setup-*.exe
-
