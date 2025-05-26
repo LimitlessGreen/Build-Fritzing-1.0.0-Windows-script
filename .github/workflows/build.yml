@@ -1,0 +1,30 @@
+name: Build Fritzing on Windows
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Repository klonen
+        uses: actions/checkout@v3
+
+      - name: FREEWING-JP Build-Skript klonen
+        run: |
+          git clone https://github.com/FREEWING-JP/Build-Fritzing-1.0.0-Windows-script.git build-scripts
+
+      - name: Build-Skript ausführen
+        run: |
+          cd build-scripts
+          ./00_Execute_Script.bat
+
+      - name: Artefakte hochladen
+        uses: actions/upload-artifact@v3
+        with:
+          name: Fritzing-Windows-Build
+          path: path\to\build\output\Fritzing.exe
